@@ -9,10 +9,10 @@ using namespace std;
 
 #define N 10
 #define path "N10/"
-#define bmin 3
-#define bmax 14
-#define step 0.1
-#define ntherm 2000
+#define bmin 7
+#define bmax 30
+#define step 1
+#define ntherm 5000
 #define nsim 10000
 
 string cc_to_name(const double& g2)
@@ -69,7 +69,7 @@ double antisymm_violation(int* lattice)
     {
         for(int j=i+1; j<N; ++j)
         {
-            if(lattice[idx(i,j)]*lattice[idx(j,i)] != -1) ++res;
+            if(lattice[idx(i,j)]*lattice[idx(j,i)] == 1) ++res;
         }
     }
 
@@ -135,7 +135,7 @@ int main()
             delete [] lattice;
         }
                 
-        out_h << beta << " " << h/nsim << endl;
+        out_h << beta << " " << h/(nsim-ntherm) << endl;
         out_antisymm << beta << " " << antisymm/(nsim-ntherm) << endl;
         out_trans << beta << " " << trans/(nsim-ntherm) << endl;
 

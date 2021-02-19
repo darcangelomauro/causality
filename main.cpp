@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define N 20
+#define N 10
 
 string cc_to_name(const double& g2)
 {
@@ -30,17 +30,6 @@ int idx(const int& i, const int& j)
 
 double H(int* lattice, const double& beta)
 {
-    // quadratic part
-    double H2=0;
-
-    for(int i=0; i<N; ++i)
-    {
-        for(int j=i+1; j<N; ++j)
-            H2 += lattice[idx(i,j)]*lattice[idx(j,i)];
-    }
-
-
-    // quartic part
     double H4=0;
 
     for(int i=0; i<N; ++i)
@@ -59,7 +48,7 @@ double H(int* lattice, const double& beta)
     }
 
 
-    return (H2 - beta*H4)/(N*N);
+    return -beta*H4/(N*N);
 }
 
 
@@ -75,9 +64,9 @@ int main()
     int* lattice = new int [N*N];
 
 
-    double beta = 3;
+    double beta = 10;
 
-    while(beta < 15)
+    while(beta < 40)
     {
         // initialize lattice
         for(int i=0; i<N*N; ++i)
@@ -92,63 +81,72 @@ int main()
         ofstream out_l(name_l);
         
         // simulation
-        for(int i=0; i<10000; ++i)
+        for(int k=0; k<100000; ++k)
         {
             // sweep the lattice
-            for(int j=0; j<N*N; ++j)
+            for(int i=0; i<N; ++i)
             {
-                // store previous value of spin (j)
-                int prev_spin = lattice[j];
-
-                // find initial energy
-                double en_i;
-                if(i==0 && j==0)
-                    en_i = H(lattice, beta);
-                else
-                    en_i = prev_H;
-
-                // randomly change value of spin (j)
-                if(gsl_rng_uniform(engine) < 0.5)
-                    lattice[j] += 1;
-                else
-                    lattice[j] += 2;
-
-                if(lattice[j] == 2)
-                    lattice[j] = -1;
-                if(lattice[j] == 3)
-                    lattice[j] = 0;
-
-                // find final energy
-                double en_f = H(lattice, beta);
-
-                // accept with probability min[1, exp(en_i-en_f)]
-                if(en_f > en_i)
+                for(int j=0; j<N; ++j)
                 {
-                    double e = exp(en_i-en_f);
-                    if(gsl_rng_uniform(engine) > e)
+                    if(i != j)
                     {
-                        // restore old configuration
-                        prev_H = en_i;
-                        lattice[j] = prev_spin;
-                    }
-                    else
-                        prev_H = en_f;
-                }
-                else
-                    prev_H = en_f;
-            }
+                        // store previous value of spin (i,j)
+                        int prev_spin = lattice[idx(i,j)];
 
+                        // find initial energy
+                        double en_i;
+                        if(i==0 && j==1)
+                            en_i = H(lattice, beta);
+                        else
+                            en_i = prev_H;
+
+                        // randomly change value of spin (i,j)
+                        if(gsl_rng_uniform(engine) < 0.5)
+                            lattice[idx(i,j)] += 1;
+                        else
+                            lattice[idx(i,j)] += 2;
+
+                        if(lattice[idx(i,j)] == 2)
+                            lattice[idx(i,j)] = -1;
+                        if(lattice[idx(i,j)] == 3)
+                            lattice[idx(i,j)] = 0;
+
+                        lattice[idx(j,i)] = -lattice[idx(i,j)];
+
+                        // find final energy
+                        double en_f = H(lattice, beta);
+
+                        // accept with probability min[1, exp(en_i-en_f)]
+                        if(en_f > en_i)
+                        {
+                            double e = exp(en_i-en_f);
+                            if(gsl_rng_uniform(engine) > e)
+                            {
+                                // restore old configuration
+                                prev_H = en_i;
+                                lattice[idx(i,j)] = prev_spin;
+                                lattice[idx(j,i)] = -prev_spin;
+                            }
+                            else
+                                prev_H = en_f;
+                        }
+                        else
+                            prev_H = en_f;
+                    }
+                }
+            }
+            
             // print H and lattice
             out_h << prev_H << endl;
-            for(int k=0; k<N*N; ++k)
-                out_l << lattice[k] << " ";
+            for(int l=0; l<N*N; ++l)
+                out_l << lattice[l] << " ";
             out_l << endl;
         }
 
         out_l.close();
         out_h.close();
-        
-        beta += 0.1;
+    
+        beta += 1;
     }
     
         
