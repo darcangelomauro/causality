@@ -8,9 +8,9 @@
 using namespace std;
 
 #define N 10
-#define path "N10/"
-#define bmin 7
-#define bmax 30
+#define path "N10_1/"
+#define bmin 1
+#define bmax 40
 #define step 1
 #define ntherm 5000
 #define nsim 10000
